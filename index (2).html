@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulso Socio CChC - Compromiso PRO</title>
+    <style>
+        /* --- Estilos base y de layout --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; padding: 40px; text-align: center; }
+        .header h1 { font-size: 2.2em; margin-bottom: 10px; font-weight: 300; }
+        .header p { font-size: 1.1em; opacity: 0.9; line-height: 1.6; }
+        .progress-bar { background: #e0e0e0; height: 6px; margin: 0; }
+        .progress-fill { background: #4CAF50; height: 100%; width: 0%; transition: width 0.3s ease; }
+        .content { padding: 40px; }
+        .block { display: none; animation: fadeIn 0.5s ease-in; }
+        .block.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .block-header { background: #f8f9fa; padding: 20px; margin: -40px -40px 30px -40px; border-left: 4px solid #4CAF50; }
+        .block-title { font-size: 1.4em; color: #333; margin-bottom: 5px; }
+        .block-subtitle { color: #666; font-size: 0.95em; }
+        .question { margin-bottom: 30px; padding: 15px; border-radius: 10px; border: 2px solid transparent; transition: border-color 0.3s ease; }
+        .question-label { font-size: 1.1em; font-weight: 600; color: #333; margin-bottom: 15px; line-height: 1.5; }
+        .question-type { font-size: 0.85em; color: #666; font-style: italic; margin-bottom: 10px; }
+        .options { margin-bottom: 10px; }
+        .option { display: flex; align-items: center; padding: 12px 15px; border: 2px solid #e9ecef; border-radius: 10px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s ease; }
+        .option:hover { border-color: #4CAF50; background: #f8fff8; }
+        .option.selected { border-color: #4CAF50; background: #e8f5e8; }
+        .option input[type="radio"], .option input[type="checkbox"] { margin-right: 12px; width: 18px; height: 18px; }
+        
+        /* Estilos para el Ranking Interactivo */
+        .ranking-wrapper { display: flex; gap: 20px; flex-wrap: wrap; }
+        .ranking-column { flex: 1; min-width: 250px; }
+        .ranking-column h3 { font-size: 1em; color: #555; margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+        .ranking-source .option { cursor: pointer; user-select: none; }
+        .ranking-source .option.selected { background-color: #f1f3f5; color: #adb5bd; cursor: not-allowed; border-color: #e9ecef; }
+        .ranking-source .option.selected:hover { background-color: #f1f3f5; }
+        .ranking-target .target-slot { display: flex; align-items: center; padding: 12px 15px; border: 2px dashed #ced4da; border-radius: 10px; margin-bottom: 8px; color: #6c757d; height: 53px; transition: all 0.2s ease; }
+        .ranking-target .target-slot.filled { border-style: solid; border-color: #4CAF50; background: #e8f5e8; color: #333; cursor: grab; }
+        .ranking-target .target-slot.over { border-color: #28a745; background-color: #d4edda; }
+        .ranking-target .target-slot.dragging { opacity: 0.4; }
+        .ranking-target .rank-number { font-weight: bold; color: #4CAF50; margin-right: 10px; font-size: 0.9em; }
+        .ranking-target .target-content { flex-grow: 1; }
+        .ranking-target .remove-btn { background: none; border: none; font-size: 1.2em; cursor: pointer; color: #dc3545; padding: 0 5px; opacity: 0.6; transition: opacity 0.2s; }
+        .ranking-target .remove-btn:hover { opacity: 1; }
+
+        /* Estilos para validación de errores */
+        .question.is-invalid { border-color: #dc3545; }
+        .error-message { color: #dc3545; font-size: 0.85em; margin-top: 10px; display: none; }
+
+        /* Estilos para inputs de texto y navegación */
+        .text-input, .input-field { width: 100%; padding: 15px; border: 2px solid #e9ecef; border-radius: 10px; font-size: 1em; transition: border-color 0.2s ease; }
+        .text-input:focus, .input-field:focus { outline: none; border-color: #4CAF50; }
+        .navigation { display: flex; justify-content: space-between; align-items: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #e9ecef; }
+        .btn { padding: 12px 30px; border: none; border-radius: 25px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+        .btn-primary { background: #4CAF50; color: white; }
+        .btn-primary:hover { background: #45a049; transform: translateY(-2px); }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
+        .step-indicator { text-align: center; color: #666; font-size: 0.9em; }
+        .completion-message { text-align: center; padding: 60px 40px; }
+        .completion-message h2 { color: #4CAF50; font-size: 2em; margin-bottom: 20px; }
+        .completion-message p { font-size: 1.1em; color: #666; line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .container { margin: 10px; border-radius: 15px; }
+            .header, .content { padding: 20px; }
+            .header h1 { font-size: 1.8em; }
+            .ranking-wrapper { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Pulso Socio CChC</h1>
+            <p>Tu visión construye el futuro. Ayúdanos a diseñar talleres hechos a la medida de tus necesidades reales.</p>
+            <p><strong>Duración estimada:</strong> 12-15 minutos | <strong>Confidencial</strong></p>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+
+        <div class="content">
+            <!-- BLOQUE 1: NEGOCIO -->
+            <div class="block active" id="block1">
+                <div class="block-header">
+                    <div class="block-title">Bloque 1: Para Entender tu Negocio</div>
+                    <div class="block-subtitle">Duración estimada: 2 minutos</div>
+                </div>
+
+                <div class="question" data-question-id="q1">
+                    <div class="question-label">1. ¿Cuál de las siguientes opciones describe mejor la actividad principal de tu empresa?</div>
+                    <div class="question-type">Pregunta de opción única</div>
+                    <div class="options">
+                         <label class="option"><input type="radio" name="q1" value="constructora"><span>Constructora / Contratista General</span></label>
+                         <label class="option"><input type="radio" name="q1" value="inmobiliaria"><span>Inmobiliaria</span></label>
+                         <label class="option"><input type="radio" name="q1" value="subcontratista"><span>Subcontratista (ej. eléctrico, sanitario, etc.)</span></label>
+                         <label class="option"><input type="radio" name="q1" value="proveedor"><span>Proveedor de materiales / equipos</span></label>
+                         <label class="option"><input type="radio" name="q1" value="consultoria"><span>Consultoría / Arquitectura / Ingeniería</span></label>
+                         <label class="option"><input type="radio" name="q1" value="industrial"><span>Industrial (fabricación de insumos)</span></label>
+                         <label class="option"><input type="radio" name="q1" value="otro"><span>Otro</span></label>
+                    </div>
+                    <div class="error-message">Por favor, selecciona una opción.</div>
+                </div>
+
+                <div class="question" data-question-id="q2">
+                    <div class="question-label">2. ¿En qué tipo de proyectos se concentra principalmente tu actividad?</div>
+                    <div class="question-type">Pregunta de selección múltiple (hasta dos opciones)</div>
+                    <div class="options">
+                         <label class="option"><input type="checkbox" name="q2" value="vivienda"><span>Vivienda (en altura / casas)</span></label>
+                         <label class="option"><input type="checkbox" name="q2" value="vivienda_social"><span>Vivienda social</span></label>
+                         <label class="option"><input type="checkbox" name="q2" value="oficinas"><span>Oficinas / Comercial</span></label>
+                         <label class="option"><input type="checkbox" name="q2" value="industrial"><span>Industrial / Logística</span></label>
+                         <label class="option"><input type="checkbox" name="q2" value="infraestructura"><span>Infraestructura pública / Obras civiles</span></label>
+                         <label class="option"><input type="checkbox" name="q2" value="salud"><span>Salud / Educación</span></label>
+                    </div>
+                    <div class="error-message">Por favor, selecciona hasta dos opciones.</div>
+                </div>
+
+                <div class="question" data-question-id="q3">
+                    <div class="question-label">3. Número de centros de trabajo actualmente (considera: oficinas, salas de venta, bodegas, obras en construcción, fábricas, etc.)</div>
+                    <div class="question-type">Pregunta de opción única</div>
+                    <div class="options">
+                        <label class="option"><input type="radio" name="q3" value="1"><span>Solamente 1</span></label>
+                        <label class="option"><input type="radio" name="q3" value="2-5"><span>Entre 2 y 5</span></label>
+                        <label class="option"><input type="radio" name="q3" value="6-10"><span>Entre 6 y 10</span></label>
+                        <label class="option"><input type="radio" name="q3" value="10+"><span>Más de 10</span></label>
+                    </div>
+                    <div class="error-message">Por favor, selecciona una opción.</div>
+                </div>
+
+                <div class="question" data-question-id="q4">
+                    <div class="question-label">4. ¿Cuántas personas trabajan en tu empresa (aproximadamente)?</div>
+                    <div class="question-type">Pregunta de opción única</div>
+                    <div class="options">
+                        <label class="option"><input type="radio" name="q4" value="1-10"><span>Entre 1 y 10</span></label>
+                        <label class="option"><input type="radio" name="q4" value="11-50"><span>Entre 11 y 50</span></label>
+                        <label class="option"><input type="radio" name="q4" value="51-200"><span>Entre 51 y 200</span></label>
+                        <label class="option"><input type="radio" name="q4" value="200+"><span>Más de 200</span></label>
+                    </div>
+                    <div class="error-message">Por favor, selecciona una opción.</div>
+                </div>
+
+                <div class="navigation">
+                    <div></div>
+                    <div class="step-indicator">Bloque 1 de 5</div>
+                    <button class="btn btn-primary" id="nextBtn" onclick="nextBlock()">Siguiente →</button>
+                </div>
+            </div>
+
+            <!-- BLOQUE 2: RETOS OPERACIONALES -->
+            <div class="block" id="block2">
+                <div class="block-header">
+                    <div class="block-title">Bloque 2: Desafíos Operacionales</div>
+                    <div class="block-subtitle">Duración estimada: 3 minutos</div>
+                </div>
+
+                <div class="question" data-question-id="q5">
+                    <div class="question-label">5. De los siguientes aspectos operacionales, ordena del 1 al 5 cuáles representan los mayores desafíos para tu empresa actualmente (1 = mayor desafío)</div>
+                    <div class="question-type">Pregunta de ranking interactivo</div>
+                    
+                    <div class="ranking-wrapper" id="ranking_q5">
+                        <div class="ranking-column ranking-source">
+                            <h3>Opciones disponibles</h3>
+                            <div class="option" data-value="seguridad" draggable="true">
+                                <span>Gestión de seguridad y salud ocupacional</span>
+                            </div>
+                            <div class="option" data-value="productividad" draggable="true">
+                                <span>Productividad y eficiencia en obra</span>
+                            </div>
+                            <div class="option" data-value="costos" draggable="true">
+                                <span>Control de costos y presupuestos</span>
+                            </div>
+                            <div class="option" data-value="plazos" draggable="true">
+                                <span>Cumplimiento de plazos</span>
+                            </div>
+                            <div class="option" data-value="calidad" draggable="true">
+                                <span>Control de calidad</span>
+                            </div>
+                            <div class="option" data-value="personal" draggable="true">
+                                <span>Gestión y retención de personal</span>
+                            </div>
+                            <div class="option" data-value="tecnologia" draggable="true">
+                                <span>Adopción de nuevas tecnologías</span>
+                            </div>
+                        </div>
+                        
+                        <div class="ranking-column ranking-target">
+                            <h3>Tu ranking (arrastra aquí)</h3>
+                            <div class="target-slot" data-rank="1">
+                                <span class="rank-number">1°</span>
+                                <span class="target-content">Arrastra una opción aquí</span>
+                            </div>
+                            <div class="target-slot" data-rank="2">
+                                <span class="rank-number">2°</span>
+                                <span class="target-content">Arrastra una opción aquí</span>
+                            </div>
+                            <div class="target-slot" data-rank="3">
+                                <span class="rank-number">3°</span>
+                                <span class="target-content">Arrastra una opción aquí</span>
+                            </div>
+                            <div class="target-slot" data-rank="4">
+                                <span class="rank-number">4°</span>
+                                <span class="target-content">Arrastra una opción aquí</span>
+                            </div>
+                            <div class="target-slot" data-rank="5">
+                                <span class="rank-number">5°</span>
+                                <span class="target-content">Arrastra una opción aquí</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="error-message">Por favor, completa el ranking con 5 opciones.</div>
+                </div>
+
+                <div class="question" data-question-id="q6">
+                    <div class="question-label">6. ¿Cuál de los siguientes aspectos consideras que es la mayor fortaleza de tu empresa?</div>
+                    <div class="question-type">Pregunta de opción única</div>
+                    <div class="options">
+                        <label class="option"><input type="radio" name="q6" value="experiencia"><span>Experiencia y trayectoria</span></label>
+                        <label class="option"><input type="radio" name="q6" value="equipo"><span>Equipo humano calificado</span></label>
+                        <label class="option"><input type="radio" name="q6" value="innovacion"><span>Innovación y adopción tecnológica</span></label>
+                        <label class="option"><input type="radio" name="q6" value="servicio"><span>Calidad del servicio al cliente</span></label>
+                        <label class="option"><input type="radio" name="q6" value="costos"><span>Competitividad en costos</span></label>
+                        <label class="option"><input type="radio" name="q6" value="procesos"><span>Procesos y sistemas eficientes</span></label>
+                    </div>
+                    <div class="error-message">Por favor, selecciona una opción.</div>
+                </div>
+
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="prevBlock()">← Anterior</button>
+                    <div class="step-indicator">Bloque 2 de 5</div>
+                    <button class="btn btn-primary" onclick="nextBlock()">Siguiente →</button>
+                </div>
+            </div>
+
+            <!-- BLOQUE 3: CAPACITACIÓN Y DESARROLLO -->
+            <div class="block" id="block3">
+                <div class="block-header">
+                    <div class="block-title">Bloque 3: Capacitación y Desarrollo</div>
+                    <div class="block-subtitle">Duración estimada: 3 minutos</div>
+                </div>
+
+                <div class="question" data-question-id="q7">
+                    <div class="question-label">7. Ordena del 1 al 5 las áreas donde crees que tu equipo necesita más formación o actualización (1 = mayor necesidad)</div>
+                    <div class="question-type">Pregunta de ranking interactivo</div>
+                    
+                    <div class="ranking-wrapper" id="ranking_q7">
+                        <div class="ranking-column ranking-source">
+                            <h3>Opciones disponibles</h3>
+                            <div class="option" data-value="prevencion" draggable="true">
+                                <span>Prevención de riesgos y seguridad</span>
+                            </div>
+                            <div class="option" data-value="liderazgo" draggable="true">
+                                <span>Liderazgo y gestión de equipos</span>
+                            </div>
+                            <div class="option" data-value="planificacion" draggable="true">
+                                <span>Planificación y control de proyectos</span>
+                            </div>
+                            <div class="option" data-value="bim" draggable="true">
+                                <span>Herramientas digitales (BIM, software, etc.)</span>
+                            </div>
+                            <div class="option" data-value="normativa" draggable="true">
+                                <span>Normativa legal y cumplimiento</span>
+                            </div>
+                            <div class="option" data-value="sostenibilidad" draggable="true">
+                                <span>Sostenibilidad y construcción verde</span>
+                            </div>
+                            <div class="option" data-value="comercial" draggable="true">
+                                <span>Habilidades comerciales y negociación</span>
+                            </div>
+                        </div>
+                        
+                        <div class="ranking-column ranking-target">
+                            <h3>Tu ranking (arrastra aquí)</h3>
+                            <div class="target-slot" data-rank="1">
+                                <span class="rank-number">1°</span>
+                                <span class="target-content">Arrastra una opción aquí</span>
+                            </div>
+                            <div class="target-slot" data-rank="2">
+                                <span class="rank-number">2°</span>
+                                <span class="target-content">Arrastra una opción aquí</span>
+                            </div>
+                            <div class="target-slot" data-rank="3">
+                                <span class="rank-number">3°</span>
+                                <span class="target-content">Arrastra una opción aquí</span>
+                            </div>
+                            <div class="target-slot" data-rank="4">
+                                <span class="rank-number">4°</span>
+                                <span class="target-content">Arrastra una opción aquí</span>
+                            </div>
+                            <div class="target-slot" data-rank="5">
+                                <span class="rank-number">5°</span>
+                                <span class="target-content">Arrastra una opción aquí</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="error-message">Por favor, completa el ranking con 5 opciones.</div>
+                </div>
+
+                <div class="question" data-question-id="q8">
+                    <div class="question-label">8. ¿Con qué frecuencia tu empresa invierte en capacitación para su equipo?</div>
+                    <div class="question-type">Pregunta de opción única</div>
+                    <div class="options">
+                        <label class="option"><input type="radio" name="q8" value="mensual"><span>Al menos una vez al mes</span></label>
+                        <label class="option"><input type="radio" name="q8" value="trimestral"><span>Cada 3 meses aproximadamente</span></label>
+                        <label class="option"><input type="radio" name="q8" value="semestral"><span>Una o dos veces al año</span></label>
+                        <label class="option"><input type="radio" name="q8" value="esporadica"><span>De forma esporádica, sin periodicidad fija</span></label>
+                        <label class="option"><input type="radio" name="q8" value="nunca"><span>No invertimos en capacitación actualmente</span></label>
+                    </div>
+                    <div class="error-message">Por favor, selecciona una opción.</div>
+                </div>
+
+                <div class="question" data-question-id="q9">
+                    <div class="question-label">9. ¿Qué formato de capacitación prefieres para tu equipo?</div>
+                    <div class="question-type">Pregunta de opción única</div>
+                    <div class="options">
+                        <label class="option"><input type="radio" name="q9" value="presencial"><span>Presencial (talleres en sala)</span></label>
+                        <label class="option"><input type="radio" name="q9" value="online"><span>100% online (en vivo o grabado)</span></label>
+                        <label class="option"><input type="radio" name="q9" value="hibrido"><span>Híbrido (combinación de presencial y online)</span></label>
+                        <label class="option"><input type="radio" name="q9" value="terreno"><span>En terreno / in-company (en la empresa u obra)</span></label>
+                    </div>
+                    <div class="error-message">Por favor, selecciona una opción.</div>
+                </div>
+
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="prevBlock()">← Anterior</button>
+                    <div class="step-indicator">Bloque 3 de 5</div>
+                    <button class="btn btn-primary" onclick="nextBlock()">Siguiente →</button>
+                </div>
+            </div>
+
+            <!-- BLOQUE 4: COMPROMISO PRO -->
+            <div class="block" id="block4">
+                <div class="block-header">
+                    <div class="block-title">Bloque 4: Programa Compromiso PRO</div>
+                    <div class="block-subtitle">Duración estimada: 3 minutos</div>
+                </div>
+
+                <div class="question" data-question-id="q10">
+                    <div class="question-label">10. ¿Cuáles de los siguientes temas te gustaría que abordáramos en futuros talleres? (selecciona hasta 3)</div>
+                    <div class="question-type">Pregunta de selección múltiple (hasta tres opciones)</div>
+                    <div class="options">
+                        <label class="option"><input type="checkbox" name="q10" value="lean"><span>Lean Construction y productividad</span></label>
+                        <label class="option"><input type="checkbox" name="q10" value="digitalizacion"><span>Digitalización y transformación digital</span></label>
+                        <label class="option"><input type="checkbox" name="q10" value="sostenibilidad"><span>Sostenibilidad y construcción sustentable</span></label>
+                        <label class="option"><input type="checkbox" name="q10" value="gestion_rrhh"><span>Gestión de personas y clima laboral</span></label>
+                        <label class="option"><input type="checkbox" name="q10" value="innovacion"><span>Innovación y nuevas tecnologías</span></label>
+                        <label class="option"><input type="checkbox" name="q10" value="seguridad"><span>Seguridad y prevención avanzada</span></label>
+                        <label class="option"><input type="checkbox" name="q10" value="finanzas"><span>Finanzas y gestión de costos</span></label>
+                        <label class="option"><input type="checkbox" name="q10" value="normativa"><span>Actualización normativa y legal</span></label>
+                    </div>
+                    <div class="error-message">Por favor, selecciona hasta tres opciones.</div>
+                </div>
+
+                <div class="question" data-question-id="q11">
+                    <div class="question-label">11. ¿Participaste en algún taller o evento de Compromiso PRO en el último año?</div>
+                    <div class="question-type">Pregunta de opción única con seguimiento</div>
+                    <div class="options">
+                        <label class="option"><input type="radio" name="q11" value="si"><span>Sí</span></label>
+                        <label class="option"><input type="radio" name="q11" value="no"><span>No</span></label>
+                    </div>
+                    <div class="error-message">Por favor, selecciona una opción.</div>
+                </div>
+
+                <!-- Pregunta dinámica 11.1 (aparece solo si responde "Sí") -->
+                <div class="question" data-question-id="q11_1" id="question_q11_1" style="display: none;">
+                    <div class="question-label">11.1 ¿Qué tan útil fue ese taller para tu trabajo diario?</div>
+                    <div class="question-type">Pregunta de opción única</div>
+                    <div class="options">
+                        <label class="option"><input type="radio" name="q11_1" value="muy_util"><span>Muy útil</span></label>
+                        <label class="option"><input type="radio" name="q11_1" value="util"><span>Útil</span></label>
+                        <label class="option"><input type="radio" name="q11_1" value="poco_util"><span>Poco útil</span></label>
+                        <label class="option"><input type="radio" name="q11_1" value="nada_util"><span>Nada útil</span></label>
+                    </div>
+                    <div class="error-message">Por favor, selecciona una opción.</div>
+                </div>
+
+                <div class="question" data-question-id="q12">
+                    <div class="question-label">12. ¿Qué tan dispuesto estarías a participar en talleres futuros?</div>
+                    <div class="question-type">Pregunta de opción única</div>
+                    <div class="options">
+                        <label class="option"><input type="radio" name="q12" value="muy_interesado"><span>Muy interesado</span></label>
+                        <label class="option"><input type="radio" name="q12" value="interesado"><span>Interesado</span></label>
+                        <label class="option"><input type="radio" name="q12" value="poco_interesado"><span>Poco interesado</span></label>
+                        <label class="option"><input type="radio" name="q12" value="no_interesado"><span>No estoy interesado</span></label>
+                    </div>
+                    <div class="error-message">Por favor, selecciona una opción.</div>
+                </div>
+
+                <div class="question" data-question-id="q13">
+                    <div class="question-label">13. ¿Cuál sería el horario más conveniente para ti para asistir a un taller?</div>
+                    <div class="question-type">Pregunta de opción única</div>
+                    <div class="options">
+                        <label class="option"><input type="radio" name="q13" value="manana"><span>Mañana (9:00 - 13:00)</span></label>
+                        <label class="option"><input type="radio" name="q13" value="tarde"><span>Tarde (14:00 - 18:00)</span></label>
+                        <label class="option"><input type="radio" name="q13" value="jornada_completa"><span>Jornada completa (9:00 - 18:00)</span></label>
+                        <label class="option"><input type="radio" name="q13" value="online_asincrono"><span>Prefiero contenido online asincrónico (a mi ritmo)</span></label>
+                    </div>
+                    <div class="error-message">Por favor, selecciona una opción.</div>
+                </div>
+
+                <div class="question" data-question-id="q14">
+                    <div class="question-label">14. ¿Hay algún tema específico que te gustaría que abordáramos y que no esté en las opciones anteriores?</div>
+                    <div class="question-type">Pregunta abierta (opcional)</div>
+                    <textarea class="text-input" name="q14" rows="4" placeholder="Escribe aquí tus sugerencias..."></textarea>
+                </div>
+
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="prevBlock()">← Anterior</button>
+                    <div class="step-indicator">Bloque 4 de 5</div>
+                    <button class="btn btn-primary" onclick="nextBlock()">Siguiente →</button>
+                </div>
+            </div>
+
+            <!-- BLOQUE 5: PERCEPCIÓN Y CONTACTO -->
+            <div class="block" id="block5">
+                <div class="block-header">
+                    <div class="block-title">Bloque 5: Tu Opinión y Datos de Contacto</div>
+                    <div class="block-subtitle">Duración estimada: 2 minutos</div>
+                </div>
+
+                <div class="question" data-question-id="q15">
+                    <div class="question-label">15. ¿Cuál es tu percepción general sobre el valor que aporta la CChC a tu empresa?</div>
+                    <div class="question-type">Pregunta de opción única</div>
+                    <div class="options">
+                        <label class="option"><input type="radio" name="q15" value="muy_alto"><span>Muy alto valor</span></label>
+                        <label class="option"><input type="radio" name="q15" value="alto"><span>Alto valor</span></label>
+                        <label class="option"><input type="radio" name="q15" value="moderado"><span>Valor moderado</span></label>
+                        <label class="option"><input type="radio" name="q15" value="bajo"><span>Bajo valor</span></label>
+                        <label class="option"><input type="radio" name="q15" value="sin_valor"><span>No percibo valor</span></label>
+                    </div>
+                    <div class="error-message">Por favor, selecciona una opción.</div>
+                </div>
+
+                <div class="question" data-question-id="q16">
+                    <div class="question-label">16. ¿Qué obstáculos o barreras te impiden participar más activamente en las actividades de la CChC?</div>
+                    <div class="question-type">Pregunta abierta (opcional)</div>
+                    <textarea class="text-input" name="q16" rows="4" placeholder="Escribe aquí tu respuesta..."></textarea>
+                </div>
+
+                <div class="question" data-question-id="q17">
+                    <div class="question-label">17. Nombre completo</div>
+                    <div class="question-type">Obligatorio</div>
+                    <input type="text" class="input-field" name="nombre" placeholder="Ej: Juan Pérez González" required>
+                    <div class="error-message">Por favor, ingresa tu nombre completo.</div>
+                </div>
+
+                <div class="question" data-question-id="q18">
+                    <div class="question-label">18. Correo electrónico</div>
+                    <div class="question-type">Obligatorio</div>
+                    <input type="email" class="input-field" name="email" placeholder="ejemplo@empresa.cl" required>
+                    <div class="error-message">Por favor, ingresa un correo electrónico válido.</div>
+                </div>
+
+                <div class="question" data-question-id="q19">
+                    <div class="question-label">19. RUT</div>
+                    <div class="question-type">Obligatorio</div>
+                    <input type="text" class="input-field rut-field" name="rut" placeholder="12.345.678-9" required maxlength="12">
+                    <div class="error-message">Por favor, ingresa un RUT válido (formato: 12.345.678-9).</div>
+                </div>
+
+                <div class="question" data-question-id="q19_1">
+                    <div class="question-label">20. Teléfono de contacto</div>
+                    <div class="question-type">Obligatorio</div>
+                    <input type="tel" class="input-field" name="telefono" placeholder="+56 9 1234 5678" required>
+                    <div class="error-message">Por favor, ingresa un número de teléfono válido.</div>
+                </div>
+
+                <div class="question" data-question-id="q20">
+                    <div class="question-label">21. ¿Hay algo más que quieras compartir con nosotros?</div>
+                    <div class="question-type">Pregunta abierta (opcional)</div>
+                    <textarea class="text-input" name="q20" rows="4" placeholder="Comentarios adicionales..."></textarea>
+                </div>
+
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="prevBlock()">← Anterior</button>
+                    <div class="step-indicator">Bloque 5 de 5</div>
+                    <button class="btn btn-primary" onclick="submitForm()">Finalizar →</button>
+                </div>
+            </div>
+
+            <!-- BLOQUE 6: CONFIRMACIÓN -->
+            <div class="block" id="block6">
+                <div class="completion-message">
+                    <h2>¡Muchas gracias por tu tiempo!</h2>
+                    <p>Tus respuestas son muy valiosas para nosotros y nos ayudarán a diseñar talleres que realmente aporten valor a tu empresa.</p>
+                    <p>Pronto nos pondremos en contacto contigo con información sobre los próximos talleres.</p>
+                    <p><strong>Equipo Compromiso PRO - CChC</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ============================================
+    // CRONÓMETRO INVISIBLE - INICIO
+    // ============================================
+    let startTime = Date.now(); // Guarda el momento en que se carga la página
+    // ============================================
+
+    let currentBlock = 1;
+    const totalBlocks = 5; // Bloques navegables (sin contar el de confirmación)
+
+    // #region Navegación entre bloques
+    function showBlock(blockNumber) {
+        document.querySelectorAll('.block').forEach(b => b.classList.remove('active'));
+        document.getElementById('block' + blockNumber).classList.add('active');
+        updateProgressBar();
+        window.scrollTo(0, 0);
+    }
+
+    function nextBlock() {
+        if (!validateCurrentBlock()) {
+            alert('Por favor, completa todas las preguntas obligatorias antes de continuar.');
+            return;
+        }
+
+        if (currentBlock < totalBlocks) {
+            currentBlock++;
+            showBlock(currentBlock);
+        } else if (currentBlock === totalBlocks) {
+            submitForm();
+        }
+    }
+
+    function prevBlock() {
+        if (currentBlock > 1) {
+            currentBlock--;
+            showBlock(currentBlock);
+        }
+    }
+
+    function updateProgressBar() {
+        const progress = (currentBlock / totalBlocks) * 100;
+        document.getElementById('progressBar').style.width = progress + '%';
+    }
+    // #endregion
+
+    // #region Validación de Bloques
+    function validateCurrentBlock() {
+        const currentBlockElement = document.getElementById('block' + currentBlock);
+        const questions = currentBlockElement.querySelectorAll('.question[data-question-id]');
+        let allValid = true;
+
+        questions.forEach(question => {
+            const qId = question.getAttribute('data-question-id');
+            
+            // Si es la pregunta 11.1 y está oculta, la saltamos
+            if (qId === 'q11_1' && question.style.display === 'none') {
+                return;
+            }
+
+            if (!validateQuestion(question)) {
+                allValid = false;
+            }
+        });
+
+        return allValid;
+    }
+
+    function validateQuestion(questionElement) {
+        const qId = questionElement.getAttribute('data-question-id');
+        
+        // Pregunta de radio
+        if (questionElement.querySelector('input[type="radio"]')) {
+            const selected = questionElement.querySelector('input[type="radio"]:checked');
+            if (!selected) {
+                showError(questionElement);
+                return false;
+            }
+        }
+        
+        // Pregunta de checkbox (máximo 2 o 3)
+        if (questionElement.querySelector('input[type="checkbox"]')) {
+            const checked = questionElement.querySelectorAll('input[type="checkbox"]:checked');
+            let maxAllowed = 2;
+            if (qId === 'q10') maxAllowed = 3;
+            
+            if (checked.length === 0 || checked.length > maxAllowed) {
+                showError(questionElement);
+                return false;
+            }
+        }
+
+        // Pregunta de ranking
+        if (questionElement.querySelector('.ranking-wrapper')) {
+            const filled = questionElement.querySelectorAll('.target-slot.filled');
+            if (filled.length !== 5) {
+                showError(questionElement);
+                return false;
+            }
+        }
+
+        // Campos de texto obligatorios
+        const textInput = questionElement.querySelector('.input-field[required]');
+        if (textInput) {
+            if (textInput.value.trim() === '') {
+                showError(questionElement);
+                return false;
+            }
+            
+            // Validación de email
+            if (textInput.type === 'email') {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(textInput.value)) {
+                    showError(questionElement);
+                    return false;
+                }
+            }
+            
+            // Validación de RUT
+            if (textInput.classList.contains('rut-field')) {
+                if (!validateRUT(textInput.value)) {
+                    showError(questionElement);
+                    return false;
+                }
+            }
+
+            // Validación de teléfono
+            if (textInput.type === 'tel') {
+                const phoneRegex = /^[\d\s\+\-\(\)]+$/;
+                if (!phoneRegex.test(textInput.value) || textInput.value.replace(/\D/g, '').length < 8) {
+                    showError(questionElement);
+                    return false;
+                }
+            }
+        }
+
+        clearError(questionElement);
+        return true;
+    }
+
+    function showError(questionElement) {
+        questionElement.classList.add('is-invalid');
+        const errorMsg = questionElement.querySelector('.error-message');
+        if (errorMsg) errorMsg.style.display = 'block';
+    }
+
+    function clearError(questionElement) {
+        questionElement.classList.remove('is-invalid');
+        const errorMsg = questionElement.querySelector('.error-message');
+        if (errorMsg) errorMsg.style.display = 'none';
+    }
+    // #endregion
+
+    // #region Lógica de Ranking Interactivo
+    function setupRankingInteraction(wrapperId) {
+        const wrapper = document.getElementById(wrapperId);
+        const sourceOptions = wrapper.querySelectorAll('.ranking-source .option');
+        const targetSlots = wrapper.querySelectorAll('.ranking-target .target-slot');
+
+        // Drag desde source
+        sourceOptions.forEach(option => {
+            option.addEventListener('dragstart', (e) => {
+                if (option.classList.contains('selected')) {
+                    e.preventDefault();
+                    return;
+                }
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', option.dataset.value);
+                e.dataTransfer.setData('text/html', option.innerHTML);
+            });
+        });
+
+        // Drop en target slots
+        targetSlots.forEach(slot => {
+            slot.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (!slot.classList.contains('filled')) {
+                    slot.classList.add('over');
+                }
+            });
+
+            slot.addEventListener('dragleave', () => {
+                slot.classList.remove('over');
+            });
+
+            slot.addEventListener('drop', (e) => {
+                e.preventDefault();
+                slot.classList.remove('over');
+
+                if (slot.classList.contains('filled')) return;
+
+                const value = e.dataTransfer.getData('text/plain');
+                const html = e.dataTransfer.getData('text/html');
+                
+                slot.classList.add('filled');
+                slot.dataset.value = value;
+                slot.querySelector('.target-content').innerHTML = html;
+                
+                // Añade botón de eliminar
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-btn';
+                removeBtn.innerHTML = '×';
+                removeBtn.onclick = () => removeFromRanking(slot, wrapper);
+                slot.appendChild(removeBtn);
+
+                // Marca la opción original como seleccionada
+                const sourceOption = wrapper.querySelector(`.ranking-source .option[data-value="${value}"]`);
+                if (sourceOption) {
+                    sourceOption.classList.add('selected');
+                }
+            });
+        });
+    }
+
+    function removeFromRanking(slot, wrapper) {
+        const value = slot.dataset.value;
+        slot.classList.remove('filled');
+        slot.dataset.value = '';
+        slot.querySelector('.target-content').innerHTML = 'Arrastra una opción aquí';
+        
+        const removeBtn = slot.querySelector('.remove-btn');
+        if (removeBtn) removeBtn.remove();
+
+        // Desmarca la opción original
+        const sourceOption = wrapper.querySelector(`.ranking-source .option[data-value="${value}"]`);
+        if (sourceOption) {
+            sourceOption.classList.remove('selected');
+        }
+    }
+    // #endregion
+
+    // #region Pregunta Dinámica 11.1
+    function setupDynamicQ11() {
+        const q11Inputs = document.querySelectorAll('input[name="q11"]');
+        const q11_1 = document.getElementById('question_q11_1');
+
+        q11Inputs.forEach(input => {
+            input.addEventListener('change', (e) => {
+                if (e.target.value === 'si') {
+                    q11_1.style.display = 'block';
+                } else {
+                    q11_1.style.display = 'none';
+                    // Limpia la respuesta si estaba visible
+                    q11_1.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+                }
+            });
+        });
+    }
+    // #endregion
+
+    // #region Validación y Formato de RUT
+    function formatRUT(rut) {
+        rut = rut.replace(/[^0-9kK]/g, '');
+        
+        if (rut.length <= 1) return rut;
+        
+        let verifier = rut.slice(-1).toUpperCase();
+        let body = rut.slice(0, -1);
+        
+        body = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        
+        return body + '-' + verifier;
+    }
+
+    function validateRUT(rut) {
+        rut = rut.replace(/\./g, '').replace(/-/g, '');
+        
+        if (rut.length < 2) return false;
+        
+        let verifier = rut.slice(-1).toUpperCase();
+        let body = rut.slice(0, -1);
+        
+        if (!/^\d+$/.test(body)) return false;
+        
+        let sum = 0;
+        let multiplier = 2;
+        
+        for (let i = body.length - 1; i >= 0; i--) {
+            sum += parseInt(body[i]) * multiplier;
+            multiplier = multiplier === 7 ? 2 : multiplier + 1;
+        }
+        let calculatedVerifier = 11 - (sum % 11);
+        calculatedVerifier = calculatedVerifier === 11 ? '0' : calculatedVerifier === 10 ? 'K' : String(calculatedVerifier);
+
+        return verifier === calculatedVerifier;
+    }
+    // #endregion
+    
+    // #region Recolección de Datos y Envío al Backend
+    function collectAllResponses() {
+        const data = {};
+
+        // 1. Recolecta radios, checkboxes y textos
+        document.querySelectorAll('input[type="radio"]:checked, input[type="checkbox"]:checked, .text-input, .input-field').forEach(input => {
+             if (input.type === 'checkbox') {
+                if (!data[input.name]) data[input.name] = [];
+                data[input.name].push(input.value);
+            } else {
+                data[input.name] = input.value;
+            }
+        });
+
+        // 2. Recolecta los rankings
+        document.querySelectorAll('.ranking-wrapper').forEach(wrapper => {
+            const qId = wrapper.id.replace('ranking_', '');
+            const rankedItems = Array.from(wrapper.querySelectorAll('.target-slot.filled'))
+                                    .map(slot => slot.dataset.value);
+            data[qId] = rankedItems;
+        });
+        
+        // 3. Formatea los arrays de checkboxes como un solo string
+        for (const key in data) {
+            if (Array.isArray(data[key]) && key !== 'q5' && key !== 'q7') {
+                data[key] = data[key].join(', ');
+            }
+        }
+
+        // ============================================
+        // CRONÓMETRO INVISIBLE - CÁLCULO FINAL
+        // ============================================
+        const endTime = Date.now();
+        const totalSeconds = Math.floor((endTime - startTime) / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        data['tiempo_completado'] = `${minutes}m ${seconds}s`;
+        // ============================================
+
+        return data;
+    }
+
+    async function submitForm() {
+        const nextBtn = document.querySelector('#block5 .btn-primary');
+        nextBtn.textContent = 'Enviando...';
+        nextBtn.disabled = true;
+
+        const responses = collectAllResponses();
+        console.log("Datos a enviar:", responses);
+
+        try {
+            // ⚠️ AQUÍ CAMBIARÁS ESTA URL POR LA DE TU GOOGLE APPS SCRIPT
+            const response = await fetch('https://script.google.com/macros/s/AKfycbxaO7CgOUCbVEP49aWdtLKmoUB6dirvzpaRTRBXffSAvuYlhUB8SmYIMHA_RsrOTMu8Eg/exec', {
+                method: 'POST',
+                mode: 'no-cors', // Importante para Google Apps Script
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(responses)
+            });
+            
+            // Con mode: 'no-cors', no podemos leer la respuesta, pero si llegó aquí, se envió
+            currentBlock++;
+            showBlock(currentBlock);
+
+        } catch (error) {
+            console.error('Error al enviar el formulario:', error);
+            alert(`Hubo un error al enviar tus respuestas: ${error.message}. Por favor, inténtalo de nuevo.`);
+            nextBtn.textContent = 'Finalizar →';
+            nextBtn.disabled = false;
+        }
+    }
+    // #endregion
+
+    // #region Inicialización de Eventos (Al cargar la página)
+    document.addEventListener('DOMContentLoaded', () => {
+        setupRankingInteraction('ranking_q5');
+        setupRankingInteraction('ranking_q7');
+        setupDynamicQ11();
+        
+        document.querySelectorAll('.rut-field').forEach(field => {
+            field.addEventListener('input', (e) => {
+                const cursorPosition = e.target.selectionStart;
+                const originalLength = e.target.value.length;
+                e.target.value = formatRUT(e.target.value);
+                const newLength = e.target.value.length;
+                
+                if (newLength > originalLength) {
+                    e.target.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+                } else {
+                    e.target.setSelectionRange(cursorPosition, cursorPosition);
+                }
+            });
+        });
+
+        document.querySelectorAll('.question').forEach(q => {
+             q.addEventListener('change', () => clearError(q));
+             q.addEventListener('input', () => clearError(q));
+        });
+
+        document.addEventListener('change', function(e) {
+            if (e.target.type === 'radio' || e.target.type === 'checkbox') {
+                const option = e.target.closest('.option');
+                if (e.target.type === 'radio') {
+                    option.parentElement.querySelectorAll('.option').forEach(s => s.classList.remove('selected'));
+                }
+                option.classList.toggle('selected', e.target.checked);
+            }
+        });
+        
+        showBlock(1);
+    });
+    // #endregion
+    </script>
+</body>
+</html>
